@@ -1,5 +1,5 @@
-# modperl meta dockerfile
-# See https://github.com/LeKovr/consup
+# TenderPro modperl Dockerfile
+# See https://github.com/TenderPro/dockerfile-modperl
 
 FROM debian:wheezy
 
@@ -7,7 +7,7 @@ MAINTAINER Alexey Kovrizhkin <lekovr+docker@gmail.com>
 
 ENV CONSUP_UBUNTU_CODENAME wheezy
 
-ENV DOCKERFILE_VERSION  171017
+ENV DOCKERFILE_VERSION  180314
 
 #COPY 02proxy /etc/apt/apt.conf.d/
 
@@ -54,36 +54,38 @@ RUN useradd -m -r -s /bin/bash -Gwww-data -gusers -gsudo op
 COPY asset-apache/*.deb /opt/apache/
 
 RUN set -x \
-  &&cd /opt/apache \
+  && cd /opt/apache \
   && dpkg -i *.deb \
   && mkdir -p /usr/local/apache/logs \
-  && mkdir /usr/local/apache/perl
+  && mkdir /usr/local/apache/perl \
+  && mkdir /usr/local/apache/conf.d \
+  && mkdir /usr/local/apache/lib \
+  && sed -i 's/User nobody/User op/' /usr/local/apache/conf/httpd.conf \
+  && sed -i 's/Port 80/Port 3000/' /usr/local/apache/conf/httpd.conf \
+  && echo 'Include conf.d/*.conf' >> /usr/local/apache/conf/httpd.conf \
+  && mkdir -p /data/www
 
-COPY asset-apache/httpd.conf /usr/local/apache/conf/
 COPY asset-apache/test.pl /usr/local/apache/perl/test.pl
-#copy httpd start script for supervisord use
-COPY supervisor.d/start_apache.sh /usr/local/apache/
-#change owner for start apache from user op
-RUN set -x \
-  && chmod a+rx /usr/local/apache/cgi-bin/* \
-  && chmod a+rx /usr/local/apache/perl/* \
-  && chown -R op:www-data /usr/local/apache/logs \
-  && chown -R op:www-data /usr/local/apache/start_apache.sh
+
+# -------------------------------------------------------------------------------
+# nginx config files
+
+ADD fastcgi_params /etc/nginx/
+ADD proxy_params /etc/nginx/
 
 # -------------------------------------------------------------------------------
 # supervisord config files
-COPY supervisor.d/supervisord.conf /etc/supervisor/conf.d/
 COPY supervisor.d/*.conf /etc/supervisor/conf.d/
 
-COPY docker-entrypoint.sh /usr/local/bin/
-ENTRYPOINT ["docker-entrypoint.sh"]
+# startup scripts
+COPY init.d /init.d
 
-WORKDIR /home/app
+COPY docker-entrypoint.sh /
+ENTRYPOINT ["/docker-entrypoint.sh"]
 
-ENV APPUSER op
+ENV APP_USER op
 
-# expose ports for httpd - 8080 and nginx - 80
+# expose ports for nginx - 80
+EXPOSE 80
 
-EXPOSE 8080 80
-
-#CMD ["/usr/bin/supervisord"]
+CMD ["server"]

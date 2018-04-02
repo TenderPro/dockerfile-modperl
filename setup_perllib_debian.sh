@@ -32,12 +32,15 @@ apt-get -y install \
     libdate-calc-perl \
     liblist-moreutils-perl \
     libimager-perl \
+    libinline-perl \
+    libhpdf-dev \
     || exit 1
 
 cpanm enum \
   && cpanm Toolbox::Simple \
   && cpanm Attribute::Property \
   && cpanm URI::Escape::JavaScript \
+  && cpanm PDF::Haru \
   && cpanm http://www.cpan.org/authors/id/S/SA/SAMTREGAR/HTML-Template-2.9.tar.gz \
   || exit 1
 

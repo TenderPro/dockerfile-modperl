@@ -7,12 +7,6 @@ IFS=$'\n\t'
 # Run command via uid of current user ($FLAG owner)
 root=$PWD
 
-# Create user if none
-if [[ "$APPUSER" ]]; then
-  grep -qe "^$APPUSER:" /etc/passwd || useradd -m -r -s /bin/bash -Gwww-data -gusers -gsudo $APPUSER
-fi
-
-
 # Change user id to FLAG owner's uid
 #FLAG_UID=$(stat -c "%u" $FLAG)
 #if [[ "$FLAG_UID" ]] && [[ $FLAG_UID != $(id -u $APPUSER) ]]; then
@@ -21,15 +15,37 @@ fi
 #  chown -R $APPUSER /home/op
 #fi
 
-export PATH=/usr/lib/node_modules/.bin:$PATH
-export NODE_PATH=/usr/lib/node_modules
 
-# Add link to global modules
-[ -L $root/web_loaders ] || ln -s /usr/lib/node_modules $root/web_loaders
+function gracefulShutdown {
+  echo "Shutting down!"
+  /usr/local/apache/bin/apachectl stop
 
-#echo "Run main shell.."
-# set -x \
-# &&gosu $APPUSER $@
+}
 
-exec "/usr/bin/supervisord"
-#exec "$@"
+serve() {
+
+  if [ -d /init.d ]; then
+    for f in /init.d/*.sh; do
+      [ -f "$f" ] && echo  "Run $f.." && . "$f"
+    done
+  fi
+
+  trap gracefulShutdown SIGTERM
+
+  /usr/local/apache/bin/apachectl start
+  /usr/bin/supervisord
+
+}
+
+echo "Starting: $@"
+if [[ "$1" == "server" ]] ; then
+  serve
+elif [[ "$1" == "wait" ]] ; then
+  while [ 1 ]
+  do
+    sleep 60 &
+    wait $!
+  done
+else 
+  exec "$@"
+fi
