@@ -83,7 +83,11 @@ COPY init.d /init.d
 COPY docker-entrypoint.sh /
 ENTRYPOINT ["/docker-entrypoint.sh"]
 
+# Create user on start, see init.d/user.sh
 ENV APP_USER op
+
+# path to init script, see init.d/z-app.sh
+ENV APP_ROOT /data
 
 # expose ports for nginx - 80
 EXPOSE 80
