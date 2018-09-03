@@ -34,6 +34,7 @@ apt-get -y install \
     libimager-perl \
     libinline-perl \
     libhpdf-dev \
+    liburi-perl \
     || exit 1
 
 cpanm enum \
