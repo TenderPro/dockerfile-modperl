@@ -34,7 +34,8 @@ apt-get -y install \
     libimager-perl \
     libinline-perl \
     libhpdf-dev \
-    liburi-perl \
+    libperl-dev gcc make \
+    libjson-rpc-perl \
     || exit 1
 
 cpanm enum \
@@ -42,8 +43,9 @@ cpanm enum \
   && cpanm Attribute::Property \
   && cpanm URI::Escape::JavaScript \
   && cpanm PDF::Haru \
+  && cpanm -n http://www.cpan.org/authors/id/T/TW/TWINKLE/URI-UTF8-Punycode-1.05.tar.gz \
   && cpanm http://www.cpan.org/authors/id/S/SA/SAMTREGAR/HTML-Template-2.9.tar.gz \
-  || exit 1
+  || { cat /root/.cpanm/build.log && exit 1 ; }
 
 # libhtml-template-perl \
 # same as BSD copy
